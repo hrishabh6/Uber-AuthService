@@ -3,6 +3,9 @@ package com.example.uberprojectauthservice.controller;
 
 import com.example.uberprojectauthservice.dto.PassengerDto;
 import com.example.uberprojectauthservice.dto.PassengerSignupRequestDto;
+import com.example.uberprojectauthservice.service.AuthService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,10 +17,18 @@ import java.util.Optional;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    @PostMapping("/signup")
-    public Optional<PassengerDto> signup(@RequestBody PassengerSignupRequestDto passengerSignupRequestDto) {
+    private final AuthService authService;
 
-        return null;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<PassengerDto> signup(@RequestBody PassengerSignupRequestDto passengerSignupRequestDto) {
+
+        PassengerDto response = authService.signUp(passengerSignupRequestDto);
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
 
     }
 

@@ -21,7 +21,7 @@ import java.util.function.Function;
  * It implements CommandLineRunner to demonstrate token generation and extraction on application startup.
  */
 @Service
-public class JwtService implements CommandLineRunner {
+public class JwtService {
 
     /**
      * Injects the JWT expiry time in seconds from application properties (e.g., application.properties or application.yml).
@@ -39,10 +39,10 @@ public class JwtService implements CommandLineRunner {
      * Creates a new JWT token.
      *
      * @param payload A map of key-value pairs representing the custom claims to be included in the token's payload.
-     * @param username The subject of the token, typically the username or user ID.
+     * @param email The subject of the token, typically the username or user ID.
      * @return A signed JWT string.
      */
-    private String createToken(Map<String, Object> payload, String email) {
+    public String createToken(Map<String, Object> payload, String email) {
         // Calculate the expiration date for the token.
         // It's current time + expiry (in seconds) converted to milliseconds.
         Date expiryDate = new Date(System.currentTimeMillis() + expiry * 1000L);
@@ -57,13 +57,17 @@ public class JwtService implements CommandLineRunner {
                 .compact(); // Compact the JWT into its final string representation.
     }
 
+    public String createToken(String email) {
+        return createToken(new HashMap<>(), email);
+    }
+
     /**
      * Generates a SecretKey from the configured secret string.
      * This key is used for signing JWTs and verifying their signatures.
      *
      * @return A Key object suitable for HMAC-SHA signing.
      */
-    private Key getKey() {
+    public Key getKey() {
         // Convert the secret string to bytes using UTF-8 encoding and generate an HMAC-SHA key.
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
@@ -74,7 +78,7 @@ public class JwtService implements CommandLineRunner {
      * @param token The JWT string from which to extract the payload.
      * @return A Claims object containing all the claims from the token's payload.
      */
-    private Claims extractPayload(String token) {
+    public Claims extractPayload(String token) {
         // Use Jwts.parser() to create a parser, verify the token's signature,
         // build the parser, parse the signed claims, and then get the payload.
         return Jwts.parser()
@@ -92,7 +96,7 @@ public class JwtService implements CommandLineRunner {
      * @param <T> The type of the claim to be extracted.
      * @return The extracted claim of type T.
      */
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractPayload(token); // First, extract all claims from the token.
         return claimsResolver.apply(claims); // Then, apply the provided function to get the specific claim.
     }
@@ -103,7 +107,7 @@ public class JwtService implements CommandLineRunner {
      * @param token The JWT string.
      * @return The expiration Date of the token.
      */
-    private Date extractExpiryDate(String token) {
+    public Date extractExpiryDate(String token) {
         // Use the generic extractClaim method to get the expiration date claim.
         return extractClaim(token, Claims::getExpiration);
     }
@@ -114,7 +118,7 @@ public class JwtService implements CommandLineRunner {
      * @param token The JWT string.
      * @return True if the token has expired, false otherwise.
      */
-    private Boolean isTokenExpired(String token) {
+    public Boolean isTokenExpired(String token) {
         // Get the expiration date and compare it with the current date.
         return extractExpiryDate(token).before(new Date());
     }
@@ -125,15 +129,16 @@ public class JwtService implements CommandLineRunner {
      * @param token The JWT string.
      * @return The subject string (username) of the token.
      */
-    private String getEmail(String token) {
+    public String getEmail(String token) {
         // Use the generic extractClaim method to get the subject claim.
         return extractClaim(token, Claims::getSubject);
     }
 
-    private Boolean validateToken(String token) {
+    public Boolean validateToken(String token) {
         final String getEmailFromToken = getEmail(token);
         return getEmailFromToken.equals(token) && !isTokenExpired(token);
     }
+
 
 
     /**
@@ -144,26 +149,26 @@ public class JwtService implements CommandLineRunner {
      * @param args Command line arguments (not used in this demonstration).
      * @throws Exception If an error occurs during token operations.
      */
-    @Override
-    public void run(String... args) throws Exception {
-        // Create a sample payload for the JWT.
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("username", "admin");
-        payload.put("password", "admin"); // In a real application, avoid putting sensitive info like passwords in JWT payload.
-
-        // Create a JWT token with the sample payload and a subject.
-        String result = createToken(payload, "hrishabh");
-        System.out.println("Generated JWT Token: " + result);
-
-        // Extract and print the subject (username) from the generated token.
-        System.out.println("Subject JWT Token: " + getEmail(result));
-
-        // Extract and print the entire payload (claims) from the generated token.
-        Claims extractedClaims = extractPayload(result);
-        System.out.println("Extracted JWT Payload: " + extractedClaims);
-
-        // Iterate through the extracted claims and print each key-value pair individually for clarity.
-        System.out.println("Individual Claims:");
-        extractedClaims.forEach((key, value) -> System.out.println(key + ": " + value));
-    }
+//    @Override
+//    public void run(String... args) throws Exception {
+//        // Create a sample payload for the JWT.
+//        Map<String, Object> payload = new HashMap<>();
+//        payload.put("username", "admin");
+//        payload.put("password", "admin"); // In a real application, avoid putting sensitive info like passwords in JWT payload.
+//
+//        // Create a JWT token with the sample payload and a subject.
+//        String result = createToken(payload, "hrishabh");
+//        System.out.println("Generated JWT Token: " + result);
+//
+//        // Extract and print the subject (username) from the generated token.
+//        System.out.println("Subject JWT Token: " + getEmail(result));
+//
+//        // Extract and print the entire payload (claims) from the generated token.
+//        Claims extractedClaims = extractPayload(result);
+//        System.out.println("Extracted JWT Payload: " + extractedClaims);
+//
+//        // Iterate through the extracted claims and print each key-value pair individually for clarity.
+//        System.out.println("Individual Claims:");
+//        extractedClaims.forEach((key, value) -> System.out.println(key + ": " + value));
+//    }
 }
